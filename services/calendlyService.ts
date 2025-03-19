@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-
 const API_TOKEN = process.env.EXPO_PUBLIC_API_TOKEN;
 const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
 
@@ -12,10 +11,24 @@ const api = axios.create({
   },
 });
 
+export const getCurrentUser = async () => {
+  try {
+    const response = await api.get('/users/me');
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar informações do usuário:', error);
+    throw error;
+  }
+};
+
 // Função para buscar tipos de eventos
 export const getEventTypes = async () => {
   try {
-    const response = await api.get('/event_types');
+    const response = await api.get('/event_types', {
+      params: {
+        user: 'https://api.calendly.com/users/35bb4505-7f85-40e0-9163-88b62eef0cf2',
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar tipos de eventos:', error);
@@ -23,22 +36,23 @@ export const getEventTypes = async () => {
   }
 };
 
-// Função para agendar um evento
-export const scheduleEvent = async (eventTypeUri: string, inviteeEmail: string, date: string) => {
+// Função para criar uma URL de agendamento
+export const createSchedulingUrl = async (event_type: string) => {
   try {
-    const response = await api.post('/scheduled_events', {
-      event_type_uri: eventTypeUri,
-      invitee_email: inviteeEmail,
-      start_time: date,
+    const response = await api.post('/scheduling_urls', {
+      max_event_count: 1,
+      owner: event_type,
+      owner_type: "EventType",
+      routing_type: "location"
     });
     return response.data;
   } catch (error) {
-    console.error('Erro ao agendar evento:', error);
+    console.error('Erro ao criar URL de agendamento:', error);
     throw error;
   }
 };
 
-// Função para cancelar um evento
+// Função para cancelar um evento (se precisar)
 export const cancelEvent = async (eventUri: string) => {
   try {
     const response = await api.delete(`/scheduled_events/${eventUri}`);
@@ -50,9 +64,14 @@ export const cancelEvent = async (eventUri: string) => {
 };
 
 // Função para listar eventos agendados
-export const getScheduledEvents = async () => {
+export const getScheduledEvents = async (userUri: string) => {
   try {
-    const response = await api.get('/scheduled_events');
+    const response = await api.get('/scheduled_events', {
+      params: {
+        user: userUri, // Use the user URI
+        count: 10
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar eventos agendados:', error);

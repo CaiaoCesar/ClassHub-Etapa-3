@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { themes } from '../../global/themes'; 
+import { themes } from '../../global/themes';
 
 export const style = StyleSheet.create({
     container: {
@@ -12,13 +12,13 @@ export const style = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 50, 
+        paddingTop: 50,
     },
 
     logo: {
         width: 45,
         height: 45,
-        marginBottom: 15, 
+        marginBottom: 15,
     },
 
     textAgendamentos: {
@@ -30,55 +30,53 @@ export const style = StyleSheet.create({
 
     linhaCima: {
         width: '90%',
-        height: 1, 
-        backgroundColor: themes.colors.verdeEscuro, 
-        marginTop: 10, 
-        marginBottom: 10, 
-    },
-
-    boxButtonMessages: {
-        width: '90%', 
-        marginBottom: 10, 
-        alignSelf: 'center', 
-    },
-
-    buttonMessages: {
-        width: '100%', 
-        height: 45,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-
-    buttonMessagesSelected: {
-        backgroundColor: themes.colors.verdeEscuro, 
-    },
-      
-    textMsgAgendamentosSelected: {
-        color: themes.colors.branco8, 
-    },
-
-    textMsgAgendamentos: {
-        fontSize: 20,
-        fontFamily: themes.fonts.main,
-        marginLeft: 10,
-        marginRight: 10,
+        height: 1,
+        backgroundColor: themes.colors.verdeEscuro,
+        marginTop: 10,
+        marginBottom: 10,
     },
 
     horariosContainer: {
         width: '100%',
     },
 
+    buttonAgendamento: {
+        width: '90%',
+        height: 60,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: themes.colors.branco8,
+        borderRadius: 10,
+        marginVertical: 5,
+        paddingHorizontal: 10,
+    },
+
+    textAgendamento: {
+        fontSize: 16,
+        color: themes.colors.verdeEscuro,
+        fontFamily: themes.fonts.main,
+        textAlign: 'center',
+    },
+
+    textMsgAgendamentos: {
+        fontSize: 20,
+        fontFamily: themes.fonts.main,
+        color: themes.colors.verdeEscuro,
+        textAlign: 'center',
+        marginTop: 20,
+    },
+
     linhaBaixo: {
-        width: '90%', 
-        height: 1, 
-        backgroundColor: themes.colors.verdeEscuro, 
-        marginTop: 20, 
+        width: '90%',
+        height: 1,
+        backgroundColor: themes.colors.verdeEscuro,
+        marginTop: 20,
     },
 
     rodape: {
         width: '100%',
         alignItems: 'center',
-        paddingBottom: 55, 
+        paddingBottom: 55,
     },
 
     buttonVoltar: {
@@ -87,9 +85,9 @@ export const style = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: themes.colors.branco8,
-        borderRadius: 30, 
-        marginRight: 10, 
-        elevation: 4, 
+        borderRadius: 30,
+        marginRight: 10,
+        elevation: 4,
     },
 
     Voltar: {
@@ -98,12 +96,12 @@ export const style = StyleSheet.create({
     },
 
     buttonCancelar: {
-        width: 279, 
+        width: 279,
         height: 45,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: themes.colors.branco8,
-        borderRadius: 30, 
+        borderRadius: 30,
         elevation: 4,
     },
 
@@ -117,7 +115,7 @@ export const style = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: themes.colors.verdeClaro75, 
+        backgroundColor: themes.colors.verdeClaro75,
     },
 
     modalContent: {
@@ -132,24 +130,24 @@ export const style = StyleSheet.create({
         fontSize: 20,
         color: themes.colors.verdeEscuro,
         fontFamily: themes.fonts.main,
-        marginBottom: 20, 
-        textAlign: 'center', 
+        marginBottom: 20,
+        textAlign: 'center',
     },
 
     verificado: {
         width: 50,
         height: 50,
-        marginBottom: 20, 
+        marginBottom: 20,
     },
 
     modalButton: {
-        width: 60, 
+        width: 60,
         height: 60,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: themes.colors.branco8,
         borderRadius: 30,
-        marginTop: 120, 
+        marginTop: 120,
     },
 
     confirma: {

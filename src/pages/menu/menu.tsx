@@ -24,6 +24,10 @@ export default function Menu() {
     navigation.navigate('Login'); // Navega para a tela de Login
   };
 
+  // Em algum componente ou arquivo onde você precisa da variável
+const API_URL = process.env.API_URL;
+console.log("API URL:", API_URL); // Verifique se o valor está sendo impresso
+
   return (
     <View style={style.container}>
       {/* Cabeçalho */}
