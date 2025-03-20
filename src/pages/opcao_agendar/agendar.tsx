@@ -8,6 +8,7 @@ import {
     Alert,
     Linking,
     StyleSheet,
+    ScrollView, // Importe ScrollView
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -22,6 +23,7 @@ import {
     getEventTypes,
     getCurrentUser,
     getScheduledEvents,
+    getEventTypeAvailableTimes, // Importe a nova função
 } from "../../../services/calendlyService";
 
 LocaleConfig.locales["pt-br"] = ptBR;
@@ -35,15 +37,18 @@ import Voltar from "../../../assets/voltar.png";
 import Verificado from "../../../assets/verificacao.png";
 
 const formatTime = (dateTimeString: string) => {
-    const date = new Date(dateTimeString);
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-    return `${hours}:${minutes}`;
+    return new Date(dateTimeString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 interface CalendlyEvent {
     start_time: string;
     end_time: string;
+}
+
+interface EventType {
+    uri: string;
+    name: string;
+    // Adicione outras propriedades relevantes do tipo de evento aqui
 }
 
 export default function Agendar() {
@@ -53,11 +58,10 @@ export default function Agendar() {
     const [pressionadoVoltar, setPressionadoVoltar] = useState<boolean>(false);
     const [pressionadoConfirmar, setPressionadoConfirmar] = useState<boolean>(false);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
-    const [pressionadoHorarios, setPressionadoHorarios] = useState<{ [key: string]: boolean }>({});
     const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null);
     const [day, setDay] = useState<DateData>();
 
-    const [eventTypes, setEventTypes] = useState<any[]>([]);
+    const [eventTypes, setEventTypes] = useState<EventType[]>([]);
     const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
     const [userUri, setUserUri] = useState<string | null>(null);
     const [availableTimes, setAvailableTimes] = useState<string[]>([]);
@@ -66,28 +70,26 @@ export default function Agendar() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-      async function loadData() {
-          setIsLoading(true);
-          setError(null);
-          try {
-              // Carregar informações do usuário
-              const userData = await getCurrentUser();
-              const currentUserUri = userData.resource.uri; // Armazena o user URI
-              setUserUri(currentUserUri);
-  
-              // Carregar tipos de evento
-              const eventTypesData = await getEventTypes(); // Passa o user URI
-              setEventTypes(eventTypesData.collection);
-              console.log("Event Types:", eventTypesData.collection);
-          } catch (error) {
-              console.error("Erro ao carregar dados:", error);
-              Alert.alert("Erro", "Erro ao carregar dados. Tente novamente.");
-              setError("Erro ao carregar dados. Tente novamente.");
-          } finally {
-              setIsLoading(false);
-          }
+        async function loadData() {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const userData = await getCurrentUser();
+                const currentUserUri = userData.resource.uri;
+                setUserUri(currentUserUri);
+
+                const eventTypesData = await getEventTypes(currentUserUri); // Passa o userUri
+                setEventTypes(eventTypesData);
+                console.log("Event Types:", eventTypesData);
+            } catch (error: any) {
+                console.error("Erro ao carregar dados:", error.response?.data || error.message);
+                Alert.alert("Erro", "Erro ao carregar dados. Tente novamente.");
+                setError("Erro ao carregar dados. Tente novamente.");
+            } finally {
+                setIsLoading(false);
+            }
         }
-    
+
         if (day) {
             loadData();
         }
@@ -97,57 +99,31 @@ export default function Agendar() {
         setIsLoading(true);
         setError(null);
         try {
+            if (!userUri || !selectedEventType) {
+                setError("Erro: User URI ou Tipo de Evento não selecionado.");
+                setAvailableTimes([]);
+                return;
+            }
+
             const selectedDate = new Date(date);
             const selectedDateString = selectedDate.toISOString().split("T")[0];
 
-            if (userUri) {
-                const eventsData = await getScheduledEvents(userUri);
-                console.log("Eventos Agendados:", eventsData);
+            // Define o startTime para o início do dia e o endTime para o final do dia
+            const startTime = `${selectedDateString}T00:00:00Z`;
+            const endTime = `${selectedDateString}T23:59:59Z`;
 
-                const eventsOnSelectedDate = (eventsData.collection as CalendlyEvent[]).filter((event) => {
-                    const eventStartDate = new Date(event.start_time);
-                    const eventDateString = eventStartDate.toISOString().split("T")[0];
-                    return eventDateString === selectedDateString;
-                });
+            const availableTimesData = await getEventTypeAvailableTimes(selectedEventType, startTime, endTime);
 
-                // Se não houver eventos para o dia selecionado, defina availableTimes como vazio
-                if (eventsOnSelectedDate.length === 0) {
-                    setAvailableTimes([]);
-                    return; // Retorna para evitar a geração dos horários padrão
-                }
+            // Adapte a resposta da API para o formato que você está usando
+            const availableTimes = availableTimesData.collection.map((item: any) => {
+                const time = new Date(item.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return time;
+            });
 
-                const bookedTimes = eventsOnSelectedDate.map(event => ({
-                    start: formatTime(event.start_time),
-                    end: formatTime(event.end_time)
-                }));
+            setAvailableTimes(availableTimes);
 
-                // Geração dos horários disponíveis
-                let availableTimes = [];
-                let currentTime = 8 * 60; // 8:00 AM em minutos
-                const endTime = 18 * 60;   // 6:00 PM em minutos
-
-                while (currentTime < endTime) {
-                    const hours = Math.floor(currentTime / 60).toString().padStart(2, "0");
-                    const minutes = (currentTime % 60).toString().padStart(2, "0");
-                    const time = `${hours}:${minutes}`;
-
-                    // Verifique se o horário está bloqueado
-                    const isBooked = bookedTimes.some(bookedTime => time >= bookedTime.start && time < bookedTime.end);
-
-                    if (!isBooked) {
-                        availableTimes.push(time);
-                    }
-
-                    currentTime += 30; // Intervalos de 30 minutos
-                }
-
-                setAvailableTimes(availableTimes);
-            } else {
-                setAvailableTimes([]);
-                setError("Erro: User URI não encontrado.");
-            }
-        } catch (error) {
-            console.error("Erro ao buscar horários disponíveis:", error);
+        } catch (error: any) {
+            console.error("Erro ao buscar horários disponíveis:", error.response?.data || error.message);
             Alert.alert("Erro", "Erro ao buscar horários disponíveis. Tente novamente.");
             setError("Erro ao buscar horários disponíveis. Tente novamente.");
             setAvailableTimes([]);
@@ -164,31 +140,37 @@ export default function Agendar() {
 
     const handlePressIn = (horario: string) => {
         setHorarioSelecionado(horario);
-        setPressionadoHorarios((prev) => ({ ...prev, [horario]: true }));
     };
 
-    const handlePressOut = (horario: string) => {
-        setPressionadoHorarios((prev) => ({ ...prev, [horario]: false }));
+    const handlePressOut = () => {
+        // Não precisa fazer nada aqui, já que o estado é controlado por onPressIn
     };
 
     const handleAgendarEvento = async () => {
         if (day && horarioSelecionado && selectedEventType) {
             try {
                 const response = await createSchedulingUrl(selectedEventType);
-                console.log("URL de agendamento criada:", response.resource.scheduling_url);
-                Linking.openURL(response.resource.scheduling_url);
-                console.log("Evento agendado:", response);
-                setModalVisible(false);
-                Alert.alert("Sucesso", "Evento agendado com sucesso!");
-            } catch (error) {
-                console.error("Erro ao criar URL de agendamento:", error);
-                console.error("Erro ao agendar evento:", error);
+
+                if (response && response.resource && response.resource.booking_url) {
+                    const schedulingUrl = response.resource.booking_url; // Use booking_url
+                    console.log("URL de agendamento criada:", schedulingUrl);
+                    Linking.openURL(schedulingUrl);
+                    setModalVisible(false);
+                    Alert.alert("Sucesso", "Evento agendado com sucesso!");
+                } else {
+                    console.error("Erro: URL de agendamento não encontrada na resposta:", response);
+                    Alert.alert("Erro", "Erro: URL de agendamento não encontrada. Tente novamente.");
+                }
+            } catch (error: any) {
+                console.error("Erro ao criar URL de agendamento:", error.response?.data || error.message);
                 Alert.alert("Erro", "Erro ao agendar evento. Tente novamente.");
             }
         } else {
             Alert.alert("Atenção", "Selecione uma data, um horário e um tipo de evento.");
         }
     };
+
+    const isAgendarButtonDisabled = !day || !horarioSelecionado || !selectedEventType;
 
     return (
         <View style={style.container}>
@@ -215,59 +197,69 @@ export default function Agendar() {
             <View style={style.horariosContainer}>
                 <Image source={LinhaMeio} style={style.linhaMeio} resizeMode="contain" />
                 <Text style={style.horariosTitle}>{themes.strings.textHorarios}</Text>
-                <View style={style.horariosGrid}>
-                    {isLoading ? (
-                        <Text style={style.textMsgHorarios}>Carregando horários...</Text>
-                    ) : error ? (
-                        <Text style={[style.textMsgHorarios, styles.errorText]}>{error}</Text>
-                    ) : availableTimes.length > 0 ? (
-                        availableTimes.map((horario) => (
-                            <Pressable
-                                key={horario}
-                                style={({ pressed }) => [
-                                    style.buttonHorarios,
-                                    horarioSelecionado === horario && style.buttonHorariosSelected,
-                                    {
-                                        backgroundColor:
-                                            pressed || horarioSelecionado === horario
-                                                ? themes.colors.verdeEscuro
-                                                : themes.colors.branco8,
-                                    },
-                                ]}
-                                onPressIn={() => handlePressIn(horario)}
-                                onPressOut={() => handlePressOut(horario)}
-                            >
-                                {({ pressed }) => (
+                {/* Envolva com ScrollView */}
+                <ScrollView style={{ width: "100%" }}>
+                    <View style={style.horariosGrid}>
+                        {isLoading ? (
+                            <Text style={style.textMsgHorarios}>Carregando horários...</Text>
+                        ) : error ? (
+                            <Text style={[style.textMsgHorarios, styles.errorText]}>{error}</Text>
+                        ) : availableTimes.length > 0 ? (
+                            availableTimes.map((horario) => (
+                                <Pressable
+                                    key={horario}
+                                    style={[
+                                        style.buttonHorarios,
+                                        horarioSelecionado === horario && style.buttonHorariosSelected,
+                                        {
+                                            backgroundColor:
+                                                horarioSelecionado === horario
+                                                    ? themes.colors.verdeEscuro
+                                                    : themes.colors.branco8,
+                                        },
+                                    ]}
+                                    onPressIn={() => handlePressIn(horario)}
+                                    onPressOut={() => handlePressOut()}
+                                >
                                     <Text
                                         style={[
                                             style.textMsgHorarios,
                                             horarioSelecionado === horario && style.textMsgHorariosSelected,
                                             {
                                                 color:
-                                                    pressed || horarioSelecionado === horario
+                                                    horarioSelecionado === horario
                                                         ? themes.colors.branco8
                                                         : themes.colors.verdeEscuro,
-                                            },
-                                        ]}
-                                    >
-                                        {horario}
-                                    </Text>
-                                )}
+                                        },
+                                    ]}
+                                >
+                                    {horario}
+                                </Text>
                             </Pressable>
                         ))
                     ) : (
-                        <Text style={style.textMsgHorarios}>Nenhum horário disponível para este dia.</Text>
+                        <Text style={style.textMsgHorarios}>
+                            Nenhum horário disponível para este dia.
+                        </Text>
                     )}
-                </View>
+                    </View>
+                </ScrollView>
+                {/* Fim do ScrollView */}
             </View>
 
             <View>
                 <Text>Selecione o tipo de evento:</Text>
-                {eventTypes.map((eventType: any) => (
-                    <Pressable key={eventType.uri} onPress={() => setSelectedEventType(eventType.uri)}>
-                        <Text>{eventType.name}</Text>
-                    </Pressable>
-                ))}
+                {isLoading ? (
+                    <Text>Carregando tipos de evento...</Text>
+                ) : eventTypes.length > 0 ? (
+                    eventTypes.map((eventType: EventType) => (
+                        <Pressable key={eventType.uri} onPress={() => setSelectedEventType(eventType.uri)}>
+                            <Text>{eventType.name}</Text>
+                        </Pressable>
+                    ))
+                ) : (
+                    <Text>Nenhum tipo de evento encontrado.</Text>
+                )}
             </View>
 
             <View style={style.rodape}>
@@ -300,23 +292,23 @@ export default function Agendar() {
                         style={({ pressed }) => [
                             style.buttonAgendar,
                             {
-                                backgroundColor: pressed ? themes.colors.verdeEscuro : themes.colors.branco8,
+                                backgroundColor: pressed || isAgendarButtonDisabled ? themes.colors.verdeEscuro : themes.colors.branco8,
+                                opacity: isAgendarButtonDisabled ? 0.5 : 1,
                             },
                         ]}
-                        onPressIn={() => setPressionadoAgendar(true)}
+                        onPressIn={() => !isAgendarButtonDisabled && setPressionadoAgendar(true)}
                         onPressOut={() => setPressionadoAgendar(false)}
-                        onPress={() => setModalVisible(true)}
+                        onPress={() => !isAgendarButtonDisabled && setModalVisible(true)}
+                        disabled={isAgendarButtonDisabled}
                     >
-                        {({ pressed }) => (
-                            <Text
-                                style={[
-                                    style.agendarText,
-                                    { color: pressed ? themes.colors.branco8 : themes.colors.verdeEscuro },
-                                ]}
-                            >
-                                {themes.strings.agendarText}
-                            </Text>
-                        )}
+                        <Text
+                            style={[
+                                style.agendarText,
+                                { color: themes.colors.branco8 },
+                            ]}
+                        >
+                            {themes.strings.agendarText}
+                        </Text>
                     </Pressable>
                 </View>
             </View>

@@ -5,9 +5,9 @@ import {
     Image,
     Modal,
     Pressable,
-    ScrollView,
     Alert,
-    FlatList
+    FlatList,
+    StyleSheet
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -16,14 +16,13 @@ import { RootStackParamList } from "../../@types/types";
 import { themes } from "../../global/themes";
 import { style } from "./styles";
 
-import { cancelEvent, getScheduledEvents, getCurrentUser } from "../../../services/calendlyService"; // Importação do serviço
+import { cancelEvent, getScheduledEvents, getCurrentUser } from "../../../services/calendlyService";
 
 import Logo from "../../../assets/logo.png";
 import Linha from "../../../assets/Line.png";
 import Voltar from "../../../assets/voltar.png";
 import Verificado from "../../../assets/verificacao.png";
 
-// Defina a interface para o objeto de evento
 interface Evento {
     uri: string;
     name: string;
@@ -39,6 +38,17 @@ interface Evento {
     updated_at: string;
 }
 
+const formatDate = (dateTimeString: string) => {
+    const date = new Date(dateTimeString);
+    return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+};
+
 export default function Agendamentos() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -50,33 +60,32 @@ export default function Agendamentos() {
     const [eventos, setEventos] = useState<Evento[]>([]);
 
     const [userUri, setUserUri] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        async function loadEventos() {
+        async function loadData() {
+            setIsLoading(true);
+            setError(null);
             try {
-                // Busque o userUri
                 const userData = await getCurrentUser();
                 setUserUri(userData.resource.uri);
 
-                // Agora, busque os eventos passando o userUri
                 const data = await getScheduledEvents(userData.resource.uri);
-
-                console.log("Dados da API:", data); // Verifique os dados aqui!
-
-                // Supondo que a API retorna os eventos em um array chamado 'collection'
+                console.log("Dados da API:", data);
                 setEventos(data.collection as Evento[]);
-
-            } catch (error) {
-                console.error("Erro ao buscar eventos:", error);
-                // Trate o erro adequadamente
+            } catch (error: any) {
+                console.error("Erro ao buscar eventos:", error.response?.data || error.message);
+                setError("Erro ao buscar eventos. Tente novamente.");
                 Alert.alert("Erro", "Erro ao buscar eventos. Tente novamente.");
+            } finally {
+                setIsLoading(false);
             }
         }
 
-        loadEventos();
+        loadData();
     }, []);
 
-    // Função para cancelar um evento
     const handleCancelarEvento = async () => {
         if (!eventoSelecionado) {
             Alert.alert("Atenção", "Nenhum evento selecionado para cancelar.");
@@ -87,47 +96,64 @@ export default function Agendamentos() {
             const response = await cancelEvent(eventoSelecionado);
             console.log("Evento cancelado:", response);
 
-            // Fechar o modal e fornecer feedback ao usuário
+            // Atualizar a lista de eventos após o cancelamento
+            setEventos(prevEventos => prevEventos.filter(evento => evento.uri !== eventoSelecionado));
+
             setModalVisible(false);
             Alert.alert("Sucesso", "Evento cancelado com sucesso!");
-        } catch (error) {
-            console.error("Erro ao cancelar evento:", error);
+        } catch (error: any) {
+            console.error("Erro ao cancelar evento:", error.response?.data || error.message);
             Alert.alert("Erro", "Erro ao cancelar evento. Tente novamente.");
         }
     };
 
-    const renderItem = ({ item }: { item: Evento }) => (
-        <View style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#ccc' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{item.name}</Text>
-            <Text>Data e hora de início: {item.start_time}</Text>
-            <Text>Data e hora de término: {item.end_time}</Text>
-            <Text>Tipo de evento: {item.event_type}</Text>
-            <Text>Número de convidados: {item.invitees_counter}</Text>
-            <Text>Localização: {item.location.location}</Text>
-            <Text>Criado em: {item.created_at}</Text>
-            <Text>Atualizado em: {item.updated_at}</Text>
-            {/* Adicione outros campos conforme necessário */}
-        </View>
-    );
+    const renderItem = ({ item }: { item: Evento }) => {
+        const startTime = new Date(item.start_time);
+        const formattedDate = startTime.toLocaleDateString('pt-BR');
+        const formattedTime = startTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        return (
+            <Pressable
+                style={[
+                    styles.eventItem,
+                    eventoSelecionado === item.uri && style.selectedEventItem,
+                ]}
+                onPress={() => setEventoSelecionado(item.uri)}
+            >
+                <Text style={styles.eventName}>{item.name}</Text>
+                <View style={styles.eventInfo}>
+                    <Text style={styles.eventDate}>{formattedDate}</Text>
+                    <Text style={styles.eventTime}>{formattedTime}</Text>
+                </View>
+            </Pressable>
+        );
+    };
+
+    const isCancelarButtonDisabled = !eventoSelecionado;
 
     return (
         <View style={style.container}>
-            {/* Cabeçalho */}
             <View style={style.boxTop}>
                 <Image source={Logo} style={style.logo} resizeMode="contain" />
                 <Text style={style.textAgendamentos}>{themes.strings.textAgendamentos}</Text>
                 <Image source={Linha} style={style.linhaCima} resizeMode="contain" />
             </View>
 
-            {/* Lista de eventos */}
-            <FlatList
-                data={eventos}
-                keyExtractor={(item) => item.uri}
-                renderItem={renderItem}
-                contentContainerStyle={style.horariosContainer}
-            />
+            {isLoading ? (
+                <Text style={styles.loadingText}>Carregando eventos...</Text>
+            ) : error ? (
+                <Text style={styles.errorText}>{error}</Text>
+            ) : eventos.length > 0 ? (
+                <FlatList
+                    data={eventos}
+                    keyExtractor={(item) => item.uri}
+                    renderItem={renderItem}
+                    contentContainerStyle={style.horariosContainer}
+                />
+            ) : (
+                <Text style={styles.noEventsText}>Nenhum evento agendado.</Text>
+            )}
 
-            {/* Rodapé */}
             <View style={style.rodape}>
                 <Image source={Linha} style={style.linhaBaixo} resizeMode="contain" />
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20 }}>
@@ -146,7 +172,7 @@ export default function Agendamentos() {
                             <Image
                                 source={Voltar}
                                 resizeMode="contain"
-                               style={[
+                                style={[
                                     style.Voltar,
                                     { tintColor: pressed ? themes.colors.branco8 : themes.colors.verdeEscuro },
                                 ]}
@@ -158,18 +184,20 @@ export default function Agendamentos() {
                         style={({ pressed }) => [
                             style.buttonCancelar,
                             {
-                                backgroundColor: pressed ? themes.colors.verdeEscuro : themes.colors.branco8,
+                                backgroundColor: pressed || isCancelarButtonDisabled ? themes.colors.verdeEscuro : themes.colors.branco8,
+                                opacity: isCancelarButtonDisabled ? 0.5 : 1,
                             },
                         ]}
-                        onPressIn={() => setPressionadoCancelar(true)}
+                        onPressIn={() => !isCancelarButtonDisabled && setPressionadoCancelar(true)}
                         onPressOut={() => setPressionadoCancelar(false)}
-                        onPress={() => setModalVisible(true)}
+                        onPress={() => !isCancelarButtonDisabled && setModalVisible(true)}
+                        disabled={isCancelarButtonDisabled}
                     >
                         {({ pressed }) => (
                             <Text
                                 style={[
                                     style.textCancelarAgendamento,
-                                    { color: pressed ? themes.colors.branco8 : themes.colors.verdeEscuro },
+                                    { color: themes.colors.branco8 },
                                 ]}
                             >
                                 {themes.strings.textCancelarAgendamento}
@@ -179,7 +207,6 @@ export default function Agendamentos() {
                 </View>
             </View>
 
-            {/* Modal de confirmação */}
             <Modal
                 animationType="fade"
                 transparent={true}
@@ -189,7 +216,6 @@ export default function Agendamentos() {
                 <View style={style.modalOverlay}>
                     <View style={style.modalContent}>
                         <Text style={style.confirmaCancelamento}>{themes.strings.confirmaCancelamento}</Text>
-
                         <Image source={Verificado} style={style.verificado} resizeMode="contain" />
                     </View>
                     <Pressable
@@ -201,7 +227,7 @@ export default function Agendamentos() {
                         ]}
                         onPressIn={() => setPressionadoConfirmar(true)}
                         onPressOut={() => setPressionadoConfirmar(false)}
-                        onPress={handleCancelarEvento} // Chamar a função de cancelamento
+                        onPress={handleCancelarEvento}
                     >
                         {({ pressed }) => (
                             <Text
@@ -219,3 +245,53 @@ export default function Agendamentos() {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    eventItem: {
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+        backgroundColor: themes.colors.branco8, // Cor de fundo dos botões
+        borderRadius: 10, // Bordas arredondadas
+        marginVertical: 5, // Espaçamento vertical entre os botões
+    },
+    eventName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: themes.colors.verdeEscuro, // Cor do texto
+        fontFamily: themes.fonts.main, // Fonte
+    },
+    eventInfo: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 5,
+    },
+    eventDate: {
+        fontSize: 16,
+        color: themes.colors.verdeEscuro, // Cor do texto
+        fontFamily: themes.fonts.main, // Fonte
+    },
+    eventTime: {
+        fontSize: 16,
+        color: themes.colors.verdeEscuro, // Cor do texto
+        fontFamily: themes.fonts.main, // Fonte
+        textAlign: 'right',
+    },
+    loadingText: {
+        fontSize: 16,
+        textAlign: 'center',
+        marginTop: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        textAlign: 'center',
+        marginTop: 20,
+        color: 'red',
+    },
+    noEventsText: {
+        fontSize: 16,
+        textAlign: 'center',
+        marginTop: 20,
+    }
+});
