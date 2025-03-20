@@ -1,4 +1,3 @@
-// agendamentos.tsx
 import React, { useState, useEffect } from 'react';
 import {
     Text,
@@ -59,6 +58,7 @@ export default function Agendamentos() {
     const [pressionadoConfirmar, setPressionadoConfirmar] = useState<boolean>(false);
     const [eventoSelecionado, setEventoSelecionado] = useState<string | null>(null);
     const [eventos, setEventos] = useState<Evento[]>([]);
+    const [isCanceling, setIsCanceling] = useState<boolean>(false); // Novo estado para controlar o cancelamento
 
     const [userUri, setUserUri] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -88,10 +88,11 @@ export default function Agendamentos() {
     }, []);
 
     const handleCancelarEvento = async () => {
-        if (!eventoSelecionado) {
-            Alert.alert("Atenção", "Nenhum evento selecionado para cancelar.");
+        if (!eventoSelecionado || isCanceling) {
             return;
         }
+
+        setIsCanceling(true); // Desabilita o botão de cancelamento
 
         try {
             // Extrair o UUID do evento do eventUri
@@ -100,14 +101,15 @@ export default function Agendamentos() {
             // Adicionar um log para exibir o UUID
             console.log("UUID do evento:", eventUuid);
 
-            const response = await cancelEvent(eventUuid, "Cancelado pelo usuário"); // Motivo opcional
+            const response = await cancelEvent(eventUuid, "Cancelado pelo usuário");
             console.log("Evento cancelado:", response);
 
             // Atualizar a lista de eventos após o cancelamento
             setEventos(prevEventos => prevEventos.filter(evento => evento.uri !== eventoSelecionado));
 
             // Exibir o modal de sucesso
-            setModalVisible(true);
+            setModalVisible(false);
+            Alert.alert("Sucesso", "Evento cancelado com sucesso!");
 
         } catch (error: any) {
             console.error("Erro ao cancelar evento:", error.response?.data || error.message);
@@ -115,6 +117,8 @@ export default function Agendamentos() {
             // Não exibir o modal em caso de erro
             setModalVisible(false);
 
+        } finally {
+            setIsCanceling(false); // Reabilita o botão de cancelamento
         }
     };
 
@@ -140,7 +144,7 @@ export default function Agendamentos() {
         );
     };
 
-    const isCancelarButtonDisabled = !eventoSelecionado;
+    const isCancelarButtonDisabled = !eventoSelecionado || isCanceling;
 
     return (
         <View style={style.container}>
@@ -201,12 +205,12 @@ export default function Agendamentos() {
                         ]}
                         onPressIn={() => !isCancelarButtonDisabled && setPressionadoCancelar(true)}
                         onPressOut={() => setPressionadoCancelar(false)}
-                        onPress={() => setModalVisible(true)}
+                        onPress={() => handleCancelarEvento()}
                         disabled={isCancelarButtonDisabled}
                     >
                         {({ pressed }) => (
                             <Text
-                                style={[
+                               style={[
                                     style.textCancelarAgendamento,
                                     { color: themes.colors.branco8 },
                                 ]}
@@ -238,7 +242,10 @@ export default function Agendamentos() {
                         ]}
                         onPressIn={() => setPressionadoConfirmar(true)}
                         onPressOut={() => setPressionadoConfirmar(false)}
-                        onPress={handleCancelarEvento}
+                        onPress={() => {
+                            handleCancelarEvento();
+                            setModalVisible(false); // Fechar o modal após o cancelamento
+                        }}
                     >
                         {({ pressed }) => (
                             <Text
