@@ -248,7 +248,7 @@ export default function Agendar() {
             </View>
 
             <View>
-                <Text>Selecione o tipo de evento:</Text>
+                <Text>Evento Encontrado:</Text>
                 {isLoading ? (
                     <Text>Carregando tipos de evento...</Text>
                 ) : eventTypes.length > 0 ? (

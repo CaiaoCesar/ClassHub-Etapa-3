@@ -13,25 +13,25 @@ export const style = StyleSheet.create({
     boxTop:{
         width: `100%`,
         alignItems:`center`, 
-        justifyContent:`center`
+        justifyContent:`center`,
     },
 
     boxBotton1:{
         width: `100%`,
         alignItems: `center`,
-        justifyContent: `center`
+        justifyContent: `center`,
     },
 
     boxBotton2:{
         width: `100%`,
         alignItems: `center`,
-        justifyContent: `center`
+        justifyContent: `center`,
     },
 
     boxBotton3:{
         width: `100%`,
         alignItems: `center`,
-        justifyContent: `center`
+        justifyContent: `center`,
     },
 
     logo:{
@@ -41,7 +41,7 @@ export const style = StyleSheet.create({
 
     button1: {
         width: 237,
-        height: 45, 
+        height: 75, 
         alignItems: `center`,
         justifyContent: `center`,
         flexDirection: "row",
@@ -51,7 +51,8 @@ export const style = StyleSheet.create({
 
     button2: {
         width: 237,
-        height: 45, 
+        height: 65, 
+        top: 25,
         alignItems: `center`,
         justifyContent: `center`,
         flexDirection: "row", 
@@ -61,7 +62,7 @@ export const style = StyleSheet.create({
 
     button3: {
         width: 163,
-        height: 45, 
+        height: 55, 
         alignItems: `center`,
         justifyContent: `center`,
         flexDirection: "row", 
@@ -69,23 +70,23 @@ export const style = StyleSheet.create({
         paddingHorizontal: 10,
         gap: 5,
         elevation: 4,
-        top: 190,
+        top: 120,
     },
 
     textAgendar:{
         fontSize: 20,
         width: 141,
-        height: 25,
+        height: 65,
         fontWeight: 400,
         color: themes.colors.verdeEscuro,
         fontFamily: themes.fonts.main,
-        paddingLeft: 3
+        paddingLeft: 18,
     },
 
     textAgendamentos:{
         fontSize: 20,
-        width: 141,
-        height: 25,
+        width: 200,
+        height: 50,
         fontWeight: 400,
         color: themes.colors.verdeEscuro,
         fontFamily: themes.fonts.main,
@@ -94,8 +95,8 @@ export const style = StyleSheet.create({
 
     textLogout:{
         fontSize: 20,
-        width: 56,
-        height: 25,
+        width: 96,
+        height: 45,
         fontWeight: 400,
         color: themes.colors.verdeEscuro,
         fontFamily: themes.fonts.main

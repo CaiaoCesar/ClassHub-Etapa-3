@@ -155,51 +155,58 @@ export const style = StyleSheet.create({
         color: themes.colors.verdeEscuro,
         fontFamily: themes.fonts.main,
     },
+
     eventItem: {
-        padding: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
         backgroundColor: themes.colors.branco8, // Cor de fundo dos botões
         borderRadius: 10, // Bordas arredondadas
         marginVertical: 5, // Espaçamento vertical entre os botões
     },
+
     selectedEventItem: {
-        backgroundColor: '#e0e0e0', // Cor diferente para o evento selecionado
+        backgroundColor: themes.colors.verdeEscuro5, // Cor diferente para o evento selecionado
+        shadowColor: themes.colors.branco5,
     },
+
     eventName: {
         fontSize: 18,
-        fontWeight: 'bold',
         textAlign: 'center',
         color: themes.colors.verdeEscuro, // Cor do texto
         fontFamily: themes.fonts.main, // Fonte
     },
+
     eventInfo: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 5,
     },
+
     eventDate: {
         fontSize: 16,
         color: themes.colors.verdeEscuro, // Cor do texto
         fontFamily: themes.fonts.main, // Fonte
     },
+
     eventTime: {
         fontSize: 16,
         color: themes.colors.verdeEscuro, // Cor do texto
         fontFamily: themes.fonts.main, // Fonte
         textAlign: 'right',
     },
+
     loadingText: {
         fontSize: 16,
         textAlign: 'center',
         marginTop: 20,
     },
+
     errorText: {
         fontSize: 16,
         textAlign: 'center',
         marginTop: 20,
         color: 'red',
     },
+
     noEventsText: {
         fontSize: 16,
         textAlign: 'center',

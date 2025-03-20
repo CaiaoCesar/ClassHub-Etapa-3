@@ -1,3 +1,4 @@
+// calendlyService.ts
 import axios from 'axios';
 
 const BASE_URL = 'https://api.calendly.com';
@@ -13,6 +14,7 @@ api.interceptors.request.use(config => {
     const token = process.env.EXPO_PUBLIC_API_TOKEN;
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log("Token adicionado ao header:", token); // Verificação
     }
     return config;
 }, error => {
@@ -105,9 +107,18 @@ export const getEventTypeAvailableTimes = async (eventTypeId: string, startTime:
 };
 
 // Função para cancelar um evento
-export const cancelEvent = async (eventUri: string) => {
+export const cancelEvent = async (eventUuid: string, reason?: string) => {
     try {
-        const response = await api.delete(`/scheduled_events/${eventUri}`);
+        const token = process.env.EXPO_PUBLIC_API_TOKEN;
+        console.log("UUID:", eventUuid);
+
+        const response = await api.post(`/scheduled_events/${eventUuid}/cancellation`, {
+            reason: reason || "Cancelado pelo usuário" // Motivo padrão
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+        });
         return response.data;
     } catch (error: any) {
         console.error('Erro ao cancelar evento:', error.response?.data || error.message);

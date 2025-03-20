@@ -1,3 +1,4 @@
+// agendamentos.tsx
 import React, { useState, useEffect } from 'react';
 import {
     Text,
@@ -93,17 +94,27 @@ export default function Agendamentos() {
         }
 
         try {
-            const response = await cancelEvent(eventoSelecionado);
+            // Extrair o UUID do evento do eventUri
+            const eventUuid = eventoSelecionado.substring(eventoSelecionado.lastIndexOf('/') + 1).trim();
+
+            // Adicionar um log para exibir o UUID
+            console.log("UUID do evento:", eventUuid);
+
+            const response = await cancelEvent(eventUuid, "Cancelado pelo usuário"); // Motivo opcional
             console.log("Evento cancelado:", response);
 
             // Atualizar a lista de eventos após o cancelamento
             setEventos(prevEventos => prevEventos.filter(evento => evento.uri !== eventoSelecionado));
 
-            setModalVisible(false);
-            Alert.alert("Sucesso", "Evento cancelado com sucesso!");
+            // Exibir o modal de sucesso
+            setModalVisible(true);
+
         } catch (error: any) {
             console.error("Erro ao cancelar evento:", error.response?.data || error.message);
             Alert.alert("Erro", "Erro ao cancelar evento. Tente novamente.");
+            // Não exibir o modal em caso de erro
+            setModalVisible(false);
+
         }
     };
 
@@ -115,15 +126,15 @@ export default function Agendamentos() {
         return (
             <Pressable
                 style={[
-                    styles.eventItem,
+                    style.eventItem,
                     eventoSelecionado === item.uri && style.selectedEventItem,
                 ]}
                 onPress={() => setEventoSelecionado(item.uri)}
             >
-                <Text style={styles.eventName}>{item.name}</Text>
-                <View style={styles.eventInfo}>
-                    <Text style={styles.eventDate}>{formattedDate}</Text>
-                    <Text style={styles.eventTime}>{formattedTime}</Text>
+                <Text style={style.eventName}>{item.name}</Text>
+                <View style={style.eventInfo}>
+                    <Text style={style.eventDate}>{formattedDate}</Text>
+                    <Text style={style.eventTime}>{formattedTime}</Text>
                 </View>
             </Pressable>
         );
@@ -140,9 +151,9 @@ export default function Agendamentos() {
             </View>
 
             {isLoading ? (
-                <Text style={styles.loadingText}>Carregando eventos...</Text>
+                <Text style={style.loadingText}>Carregando eventos...</Text>
             ) : error ? (
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={style.errorText}>{error}</Text>
             ) : eventos.length > 0 ? (
                 <FlatList
                     data={eventos}
@@ -151,7 +162,7 @@ export default function Agendamentos() {
                     contentContainerStyle={style.horariosContainer}
                 />
             ) : (
-                <Text style={styles.noEventsText}>Nenhum evento agendado.</Text>
+                <Text style={style.noEventsText}>Nenhum evento agendado.</Text>
             )}
 
             <View style={style.rodape}>
@@ -190,7 +201,7 @@ export default function Agendamentos() {
                         ]}
                         onPressIn={() => !isCancelarButtonDisabled && setPressionadoCancelar(true)}
                         onPressOut={() => setPressionadoCancelar(false)}
-                        onPress={() => !isCancelarButtonDisabled && setModalVisible(true)}
+                        onPress={() => setModalVisible(true)}
                         disabled={isCancelarButtonDisabled}
                     >
                         {({ pressed }) => (
@@ -249,15 +260,14 @@ export default function Agendamentos() {
 const styles = StyleSheet.create({
     eventItem: {
         padding: 15,
+        width: 300,
         borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
         backgroundColor: themes.colors.branco8, // Cor de fundo dos botões
         borderRadius: 10, // Bordas arredondadas
         marginVertical: 5, // Espaçamento vertical entre os botões
     },
     eventName: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 20,
         textAlign: 'center',
         color: themes.colors.verdeEscuro, // Cor do texto
         fontFamily: themes.fonts.main, // Fonte
@@ -268,12 +278,12 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     eventDate: {
-        fontSize: 16,
+        fontSize: 20,
         color: themes.colors.verdeEscuro, // Cor do texto
         fontFamily: themes.fonts.main, // Fonte
     },
     eventTime: {
-        fontSize: 16,
+        fontSize: 20,
         color: themes.colors.verdeEscuro, // Cor do texto
         fontFamily: themes.fonts.main, // Fonte
         textAlign: 'right',

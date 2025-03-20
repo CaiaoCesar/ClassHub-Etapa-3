@@ -32,9 +32,10 @@ export const style = StyleSheet.create({
     },
     
     button1: {
-        width: 237,
-        height: 45, 
+        width: 287,
+        height: 55, 
         alignItems: `center`,
+        textAlign: `center`,
         justifyContent: `center`,
         flexDirection: "row",
         borderRadius: 30,
@@ -43,8 +44,8 @@ export const style = StyleSheet.create({
     },
 
     button2: {
-        width: 237,
-        height: 45, 
+        width: 287,
+        height: 55, 
         alignItems: `center`,
         justifyContent: `center`,
         flexDirection: "row", 
@@ -56,16 +57,16 @@ export const style = StyleSheet.create({
 
     textGmail:{
         fontSize: 20,
-        width: 139,
-        height: 25,
+        width: 239,
+        height: 35,
         color: themes.colors.verdeEscuro,
         fontFamily: themes.fonts.main
     },
 
     textAppleID:{
         fontSize: 20,
-        width: 159,
-        height: 25,
+        width: 239,
+        height: 35,
         color: themes.colors.verdeEscuro,
         fontFamily: themes.fonts.main
     }
