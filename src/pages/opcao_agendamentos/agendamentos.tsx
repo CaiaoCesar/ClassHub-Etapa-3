@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Text,
     View,
@@ -17,6 +17,7 @@ import { themes } from "../../global/themes";
 import { style } from "./styles";
 
 import { cancelEvent, getScheduledEvents, getCurrentUser } from "../../../services/calendlyService";
+import { MaterialIndicator } from 'react-native-indicators'; // Importe o indicador
 
 import Logo from "../../../assets/logo.png";
 import Linha from "../../../assets/Line.png";
@@ -62,30 +63,31 @@ export default function Agendamentos() {
 
     const [userUri, setUserUri] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isAutoRefreshing, setIsAutoRefreshing] = useState<boolean>(false); // Novo estado para o loading durante o auto refresh
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        async function loadData() {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const userData = await getCurrentUser();
-                setUserUri(userData.resource.uri);
+    const loadData = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const userData = await getCurrentUser();
+            setUserUri(userData.resource.uri);
 
-                const data = await getScheduledEvents(userData.resource.uri);
-                console.log("Dados da API:", data);
-                setEventos(data.collection as Evento[]);
-            } catch (error: any) {
-                console.error("Erro ao buscar eventos:", error.response?.data || error.message);
-                setError("Erro ao buscar eventos. Tente novamente.");
-                Alert.alert("Erro", "Erro ao buscar eventos. Tente novamente.");
-            } finally {
-                setIsLoading(false);
-            }
+            const data = await getScheduledEvents(userData.resource.uri);
+            console.log("Dados da API:", data);
+            setEventos(data.collection as Evento[]);
+        } catch (error: any) {
+            console.error("Erro ao buscar eventos:", error.response?.data || error.message);
+            setError("Erro ao buscar eventos. Tente novamente.");
+            Alert.alert("Erro", "Erro ao buscar eventos. Tente novamente.");
+        } finally {
+            setIsLoading(false);
         }
-
-        loadData();
     }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const handleCancelarEvento = async () => {
         if (!eventoSelecionado || isCanceling) {
@@ -146,6 +148,46 @@ export default function Agendamentos() {
 
     const isCancelarButtonDisabled = !eventoSelecionado || isCanceling;
 
+    const memoizedGetScheduledEvents = useCallback(async (userUri: string | null) => {
+        if (userUri) {
+            try {
+                const data = await getScheduledEvents(userUri);
+                console.log("Dados da API (Atualização Automática):", data);
+                setEventos(data.collection as Evento[]);
+            } catch (error: any) {
+                console.error("Erro ao buscar eventos (Atualização Automática):", error.response?.data || error.message);
+            }
+        }
+    }, []);
+
+
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout;
+
+        const startAutoRefresh = () => {
+            intervalId = setInterval(async () => {
+                if (userUri) {
+                    console.log("Atualizando agendamentos...");
+                    setIsAutoRefreshing(true); // Começa o loading
+                    try {
+                        await memoizedGetScheduledEvents(userUri); // Use a função memoizada
+                    } finally {
+                        setIsAutoRefreshing(false); // Termina o loading
+                    }
+                } else {
+                    console.log("User URI não disponível, aguardando...");
+                }
+            }, 5000);
+        };
+
+        startAutoRefresh();
+
+        return () => {
+            console.log("Limpando o intervalo de agendamentos...");
+            clearInterval(intervalId);
+        };
+    }, [userUri, memoizedGetScheduledEvents]);
+
     return (
         <View style={style.container}>
             <View style={style.boxTop}>
@@ -167,6 +209,12 @@ export default function Agendamentos() {
                 />
             ) : (
                 <Text style={style.noEventsText}>Nenhum evento agendado.</Text>
+            )}
+
+            {isAutoRefreshing && (
+                <View style={styles.loadingContainer}>
+                    <MaterialIndicator color={themes.colors.verdeEscuro} size={50} />
+                </View>
             )}
 
             <View style={style.rodape}>
@@ -310,5 +358,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         marginTop: 20,
+    },
+    loadingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)', // Fundo semi-transparente
     }
 });

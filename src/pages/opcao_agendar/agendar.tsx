@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Text,
     View,
@@ -8,11 +8,16 @@ import {
     Alert,
     Linking,
     StyleSheet,
-    ScrollView, // Importe ScrollView
+    ScrollView,
+    RefreshControl,
 } from "react-native";
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../@types/types";
+
 import { Calendar, DateData, LocaleConfig } from "react-native-calendars";
 import { Feather } from "@expo/vector-icons";
 import { ptBR } from "../../utils/localeCalendarConfig";
@@ -23,8 +28,9 @@ import {
     getEventTypes,
     getCurrentUser,
     getScheduledEvents,
-    getEventTypeAvailableTimes, // Importe a nova função
+    getEventTypeAvailableTimes,
 } from "../../../services/calendlyService";
+import { MaterialIndicator } from 'react-native-indicators'; 
 
 LocaleConfig.locales["pt-br"] = ptBR;
 LocaleConfig.defaultLocale = "pt-br";
@@ -36,10 +42,6 @@ import LinhaCima from "../../../assets/Line.png";
 import Voltar from "../../../assets/voltar.png";
 import Verificado from "../../../assets/verificacao.png";
 
-const formatTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
 interface CalendlyEvent {
     start_time: string;
     end_time: string;
@@ -48,8 +50,11 @@ interface CalendlyEvent {
 interface EventType {
     uri: string;
     name: string;
-    // Adicione outras propriedades relevantes do tipo de evento aqui
 }
+
+const formatTime = (dateTimeString: string) => {
+    return new Date(dateTimeString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
 export default function Agendar() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -65,37 +70,56 @@ export default function Agendar() {
     const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
     const [userUri, setUserUri] = useState<string | null>(null);
     const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+    const [scheduledEvents, setScheduledEvents] = useState<CalendlyEvent[]>([]);
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isAutoRefreshing, setIsAutoRefreshing] = useState<boolean>(false); // Novo estado para o loading durante o auto refresh
     const [error, setError] = useState<string | null>(null);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
+
+    const loadData = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const userData = await getCurrentUser();
+            const currentUserUri = userData.resource.uri;
+            setUserUri(currentUserUri);
+
+            const eventTypesData = await getEventTypes(currentUserUri);
+            setEventTypes(eventTypesData);
+            console.log("Event Types:", eventTypesData);
+        } catch (error: any) {
+            console.error("Erro ao carregar dados:", error.response?.data || error.message);
+            Alert.alert("Erro", "Erro ao carregar dados. Tente novamente.");
+            setError("Erro ao carregar dados. Tente novamente.");
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        async function loadData() {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const userData = await getCurrentUser();
-                const currentUserUri = userData.resource.uri;
-                setUserUri(currentUserUri);
+        loadData();
+    }, [loadData]);
 
-                const eventTypesData = await getEventTypes(currentUserUri); // Passa o userUri
-                setEventTypes(eventTypesData);
-                console.log("Event Types:", eventTypesData);
-            } catch (error: any) {
-                console.error("Erro ao carregar dados:", error.response?.data || error.message);
-                Alert.alert("Erro", "Erro ao carregar dados. Tente novamente.");
-                setError("Erro ao carregar dados. Tente novamente.");
-            } finally {
-                setIsLoading(false);
+    const fetchScheduledEvents = useCallback(async () => {
+        try {
+            if (!userUri) {
+                return;
             }
+            const events = await getScheduledEvents(userUri);
+            setScheduledEvents(events.collection as CalendlyEvent[]);
+        } catch (error: any) {
+            console.error("Erro ao buscar eventos agendados:", error.response?.data || error.message);
         }
+    }, [userUri]);
 
-        if (day) {
-            loadData();
+    useEffect(() => {
+        if (userUri) {
+            fetchScheduledEvents();
         }
-    }, [day]);
+    }, [userUri, fetchScheduledEvents]);
 
-    const fetchAvailableTimes = async (date: string) => {
+    const fetchAvailableTimes = useCallback(async (date: string) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -115,9 +139,17 @@ export default function Agendar() {
             const availableTimesData = await getEventTypeAvailableTimes(selectedEventType, startTime, endTime);
 
             // Adapte a resposta da API para o formato que você está usando
-            const availableTimes = availableTimesData.collection.map((item: any) => {
+            let availableTimes = availableTimesData.collection.map((item: any) => {
                 const time = new Date(item.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 return time;
+            });
+
+            // Filtra os horários que já foram agendados
+            availableTimes = availableTimes.filter((time: string) => {
+                return !scheduledEvents.some(event => {
+                    const eventTime = new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return eventTime === time;
+                });
             });
 
             setAvailableTimes(availableTimes);
@@ -130,13 +162,22 @@ export default function Agendar() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [userUri, selectedEventType, scheduledEvents]);
 
     useEffect(() => {
         if (day && userUri) {
             fetchAvailableTimes(day.dateString);
         }
-    }, [day, userUri]);
+    }, [day, userUri, fetchAvailableTimes]);
+
+    const onDayPress = (date: DateData) => {
+        if (!userUri || !selectedEventType) {
+            loadData();
+            Alert.alert("Atenção", "Carregando dados, tente novamente em instantes.");
+            return;
+        }
+        setDay(date);
+    };
 
     const handlePressIn = (horario: string) => {
         setHorarioSelecionado(horario);
@@ -152,11 +193,13 @@ export default function Agendar() {
                 const response = await createSchedulingUrl(selectedEventType);
 
                 if (response && response.resource && response.resource.booking_url) {
-                    const schedulingUrl = response.resource.booking_url; // Use booking_url
+                    const schedulingUrl = response.resource.booking_url;
                     console.log("URL de agendamento criada:", schedulingUrl);
                     Linking.openURL(schedulingUrl);
                     setModalVisible(false);
                     Alert.alert("Sucesso", "Evento agendado com sucesso!");
+                    fetchScheduledEvents(); // Atualiza a lista de eventos agendados
+                    fetchAvailableTimes(day.dateString); // Atualiza os horários disponíveis
                 } else {
                     console.error("Erro: URL de agendamento não encontrada na resposta:", response);
                     Alert.alert("Erro", "Erro: URL de agendamento não encontrada. Tente novamente.");
@@ -171,6 +214,45 @@ export default function Agendar() {
     };
 
     const isAgendarButtonDisabled = !day || !horarioSelecionado || !selectedEventType;
+
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        loadData().then(() => setRefreshing(false));
+        if (day) {
+            fetchAvailableTimes(day.dateString);
+        }
+    }, [loadData, day, fetchAvailableTimes]);
+
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout;
+
+        const startAutoRefresh = () => {
+            intervalId = setInterval(async () => { 
+                if (userUri && day && selectedEventType) {
+                    console.log("Atualizando dados...");
+                    setIsAutoRefreshing(true); // Começa o loading
+
+                    try {
+                        await Promise.all([ // Use Promise.all para executar as chamadas em paralelo
+                            fetchScheduledEvents(),
+                            fetchAvailableTimes(day.dateString)
+                        ]);
+                    } finally {
+                        setIsAutoRefreshing(false); // Termina o loading
+                    }
+                } else {
+                    console.log("Dados insuficientes para atualizar.");
+                }
+            }, 5000);
+        };
+
+        startAutoRefresh();
+
+        return () => {
+            console.log("Limpando o intervalo...");
+            clearInterval(intervalId);
+        };
+    }, [userUri, day, selectedEventType, fetchScheduledEvents, fetchAvailableTimes]);
 
     return (
         <View style={style.container}>
@@ -189,7 +271,7 @@ export default function Agendar() {
                     )}
                     theme={calendarTheme}
                     minDate={new Date().toDateString()}
-                    onDayPress={setDay}
+                    onDayPress={onDayPress}
                     markedDates={day ? { [day.dateString]: { selected: true } } : {}}
                 />
             </View>
@@ -197,8 +279,12 @@ export default function Agendar() {
             <View style={style.horariosContainer}>
                 <Image source={LinhaMeio} style={style.linhaMeio} resizeMode="contain" />
                 <Text style={style.horariosTitle}>{themes.strings.textHorarios}</Text>
-                {/* Envolva com ScrollView */}
-                <ScrollView style={{ width: "100%" }}>
+                <ScrollView
+                    style={{ width: "100%" }}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
+                >
                     <View style={style.horariosGrid}>
                         {isLoading ? (
                             <Text style={style.textMsgHorarios}>Carregando horários...</Text>
@@ -233,18 +319,17 @@ export default function Agendar() {
                                         },
                                     ]}
                                 >
-                                    {horario}
-                                </Text>
-                            </Pressable>
-                        ))
-                    ) : (
-                        <Text style={style.textMsgHorarios}>
-                            Nenhum horário disponível para este dia.
-                        </Text>
-                    )}
+                                        {horario}
+                                    </Text>
+                                </Pressable>
+                            ))
+                        ) : (
+                            <Text style={style.textMsgHorarios}>
+                                Nenhum horário disponível para este dia.
+                            </Text>
+                        )}
                     </View>
                 </ScrollView>
-                {/* Fim do ScrollView */}
             </View>
 
             <View>
@@ -261,6 +346,11 @@ export default function Agendar() {
                     <Text>Nenhum tipo de evento encontrado.</Text>
                 )}
             </View>
+            {isAutoRefreshing && (
+                <View style={styles.loadingContainer}>
+                    <MaterialIndicator color={themes.colors.verdeEscuro} size={50} />
+                </View>
+            )}
 
             <View style={style.rodape}>
                 <Image source={LinhaBaixo} style={style.linhaBaixo} resizeMode="contain" />
@@ -360,4 +450,14 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginTop: 10,
     },
+    loadingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)', // Fundo semi-transparente
+    }
 });
