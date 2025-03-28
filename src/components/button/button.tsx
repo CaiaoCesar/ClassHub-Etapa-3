@@ -8,7 +8,8 @@ interface ButtonProps extends PressableProps {
   buttonStyle?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   iconStyle?: StyleProp<ImageStyle>;
-  isSelected?: boolean; 
+  isSelected?: boolean;
+  isLoading?: boolean; // Adicione a propriedade isLoading
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -18,6 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
   textStyle,
   iconStyle,
   isSelected,
+  isLoading, // Adicione isLoading às props desestruturadas
   ...props
 }) => {
   return (
@@ -26,15 +28,16 @@ export const Button: React.FC<ButtonProps> = ({
         buttonStyle,
         {
           backgroundColor:
-            isSelected !== undefined 
+            isSelected !== undefined
               ? isSelected
-                ? themes.colors.verdeEscuro 
-                : themes.colors.branco 
-              : pressed 
-              ? themes.colors.verdeEscuro 
-              : themes.colors.branco, 
+                ? themes.colors.verdeEscuro
+                : themes.colors.branco
+              : pressed
+                ? themes.colors.verdeEscuro
+                : themes.colors.branco,
         },
       ]}
+      disabled={isLoading} // Use a propriedade isLoading para desabilitar o botão
       {...props}
     >
       {({ pressed }) => (
@@ -46,13 +49,13 @@ export const Button: React.FC<ButtonProps> = ({
                 iconStyle,
                 {
                   tintColor:
-                    isSelected !== undefined 
+                    isSelected !== undefined
                       ? isSelected
-                        ? themes.colors.branco 
-                        : themes.colors.verdeEscuro 
-                      : pressed 
-                      ? themes.colors.branco 
-                      : themes.colors.verdeEscuro, 
+                        ? themes.colors.branco
+                        : themes.colors.verdeEscuro
+                      : pressed
+                        ? themes.colors.branco
+                        : themes.colors.verdeEscuro,
                 },
               ]}
               resizeMode="contain"
@@ -65,13 +68,13 @@ export const Button: React.FC<ButtonProps> = ({
                 textStyle,
                 {
                   color:
-                    isSelected !== undefined 
+                    isSelected !== undefined
                       ? isSelected
-                        ? themes.colors.branco 
-                        : themes.colors.verdeEscuro 
-                      : pressed 
-                      ? themes.colors.branco 
-                      : themes.colors.verdeEscuro, 
+                        ? themes.colors.branco
+                        : themes.colors.verdeEscuro
+                      : pressed
+                        ? themes.colors.branco
+                        : themes.colors.verdeEscuro,
                 },
               ]}
             >

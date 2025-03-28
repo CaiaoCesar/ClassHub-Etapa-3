@@ -1,6 +1,6 @@
 import { useFonts } from 'expo-font';
 import { ActivityIndicator, View } from 'react-native';
-import Routes from './src/routes/routes'; 
+import { Slot } from 'expo-router'; // Importe o Slot
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -11,9 +11,10 @@ export default function App() {
   if (!fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#A7EA9D" /> 
+        <ActivityIndicator size="large" color="#A7EA9D" />
       </View>
     );
   }
-  return <Routes/>;
+
+  return <Slot />; // Renderize o Slot
 }

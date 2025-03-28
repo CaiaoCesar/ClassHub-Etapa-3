@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, Image, Modal, ScrollView, Pressable, Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../@types/types";
-
-import { themes } from "../../global/themes";
-import { icons } from "../../global/icons";
-import { style } from "./styles"; 
-
-import { Button } from "../../components/button/button";
-import { cancelEvent, getScheduledEvents, getCurrentUser } from "../../../services/calendlyService";
+import { useRouter } from 'expo-router';
+import { themes } from "../../src/global/themes";
+import { icons } from "../../src/global/icons";
+import { style } from "./styles";
+import { Button } from "../../src/components/button/button";
+import { cancelEvent, getScheduledEvents, getCurrentUser } from "../../services/calendlyService";
 
 interface Evento {
   uri: string;
@@ -27,7 +23,6 @@ interface Evento {
   status: string;
 }
 
-{/* Função para formatar a data e hora */}
 const formatDate = (dateTimeString: string) => {
   const date = new Date(dateTimeString);
   const optionsDate: Intl.DateTimeFormatOptions = {
@@ -48,8 +43,7 @@ const formatDate = (dateTimeString: string) => {
 };
 
 export default function Agendamentos() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
+  const router = useRouter();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [eventoSelecionado, setEventoSelecionado] = useState<string | null>(null);
   const [eventos, setEventos] = useState<Evento[]>([]);
@@ -57,7 +51,6 @@ export default function Agendamentos() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  {/* Carrega os eventos agendados */}
   useEffect(() => {
     async function loadData() {
       setIsLoading(true);
@@ -65,17 +58,17 @@ export default function Agendamentos() {
       try {
         const userData = await getCurrentUser();
         const data = await getScheduledEvents(userData.resource.uri, { count: 100 });
-  
+
         const eventosAtivos = data.collection.filter((evento: Evento) => {
           const eventoCancelado = evento.status === "canceled";
           const eventoJaPassou = new Date(evento.end_time) < new Date();
           return !eventoCancelado && !eventoJaPassou;
         });
-  
+
         const eventosOrdenados = eventosAtivos.sort((a: Evento, b: Evento) => {
           return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
         });
-  
+
         setEventos(eventosOrdenados as Evento[]);
       } catch (error: any) {
         console.error("Erro ao buscar eventos:", error.response?.data || error.message);
@@ -87,24 +80,23 @@ export default function Agendamentos() {
     }
     loadData();
   }, []);
-  
-  {/* Cancela os eventos agendados */}
+
   const handleCancelarEvento = async () => {
     if (!eventoSelecionado) {
       Alert.alert("Atenção", "Nenhum evento selecionado.");
       return;
     }
-  
-    if (isCanceling) return; 
+
+    if (isCanceling) return;
     setIsCanceling(true);
-  
+
     try {
       const eventUuid = eventoSelecionado.substring(eventoSelecionado.lastIndexOf('/') + 1).trim();
-      await cancelEvent(eventUuid, "Cancelado pelo usuário"); 
-  
+      await cancelEvent(eventUuid, "Cancelado pelo usuário");
+
       setEventos(prevEventos => prevEventos.filter(evento => evento.uri !== eventoSelecionado));
       setModalVisible(true);
-      setEventoSelecionado(null); 
+      setEventoSelecionado(null);
 
     } catch (error: any) {
       console.error("Erro ao cancelar evento:", error.response?.data || error.message);
@@ -118,7 +110,6 @@ export default function Agendamentos() {
     }
   };
 
-  {/* Renderiza cada evento na lista */}
   const renderEvento = (evento: Evento) => {
     const { formattedDate, formattedTime } = formatDate(evento.start_time);
     const handleSelecionarEvento = (uri: string) => {
@@ -142,7 +133,7 @@ export default function Agendamentos() {
                 : themes.colors.branco5,
           },
         ]}
-        onPress={() => handleSelecionarEvento(evento.uri)} 
+        onPress={() => handleSelecionarEvento(evento.uri)}
       >
         {({ pressed }) => (
           <>
@@ -180,7 +171,7 @@ export default function Agendamentos() {
       {/* Lista de eventos */}
       <ScrollView
         contentContainerStyle={style.eventosList}
-        showsVerticalScrollIndicator={false} 
+        showsVerticalScrollIndicator={false}
       >
         {isLoading ? (
           <Text style={style.loadingText}>{themes.strings.carregandoEvento}</Text>
@@ -201,18 +192,18 @@ export default function Agendamentos() {
             iconSource={icons.voltar}
             buttonStyle={style.buttonVoltar}
             iconStyle={style.Voltar}
-            onPress={() => navigation.navigate("Menu")}
+            onPress={() => router.push("/menu")}
           />
 
           <Button
             buttonText={themes.strings.cancelarAge}
             buttonStyle={[
               style.buttonCancelar,
-              { opacity: !eventoSelecionado ? 0.5 : 1 }, 
+              { opacity: !eventoSelecionado ? 0.5 : 1 },
             ]}
             textStyle={style.textCancelarAgendamento}
             onPress={handleCancelarEvento}
-            disabled={!eventoSelecionado} 
+            disabled={!eventoSelecionado}
           />
         </View>
       </View>
@@ -234,7 +225,7 @@ export default function Agendamentos() {
             buttonText={themes.strings.confirmar}
             buttonStyle={style.modalButton}
             textStyle={style.confirma}
-            onPress={() => setModalVisible(false)} 
+            onPress={() => setModalVisible(false)}
           />
         </View>
       </Modal>

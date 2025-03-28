@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, Image, Modal, ScrollView, Alert, Linking } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../@types/types";
+import { useRouter } from 'expo-router'; // Importe o useRouter
 
 import { Calendar, DateData, LocaleConfig } from "react-native-calendars";
 import { Feather } from "@expo/vector-icons";
-import { ptBR } from "../../utils/localeCalendarConfig";
+import { ptBR } from "../../src/utils/localeCalendarConfig";
 
-import { themes } from "../../global/themes";
-import { icons } from "../../global/icons";
+import { themes } from "../../src/global/themes";
+import { icons } from "../../src/global/icons";
 import { style, calendarTheme } from "./styles";
 
-import { Button } from "../../components/button/button";
+import { Button } from "../../src/components/button/button";
 import {
   createSchedulingUrl,
   getEventTypes,
   getCurrentUser,
   getEventTypeAvailableTimes,
-} from "../../../services/calendlyService";
+} from "../../services/calendlyService";
 
 LocaleConfig.locales["pt-br"] = ptBR;
 LocaleConfig.defaultLocale = "pt-br";
@@ -29,7 +27,7 @@ interface EventType {
 }
 
 export default function Agendar() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter(); // Use o useRouter
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null);
@@ -50,7 +48,7 @@ export default function Agendar() {
         const eventTypesData = await getEventTypes(userData.resource.uri);
         setEventTypes(eventTypesData);
         if (eventTypesData.length > 0) {
-          setSelectedEventType(eventTypesData[0].uri); 
+          setSelectedEventType(eventTypesData[0].uri);
         }
       } catch (error: any) {
         console.error("Erro ao carregar dados:", error.response?.data || error.message);
@@ -191,7 +189,7 @@ export default function Agendar() {
             iconSource={icons.voltar}
             buttonStyle={style.buttonVoltar}
             iconStyle={style.Voltar}
-            onPress={() => navigation.navigate("Menu")}
+            onPress={() => router.push("/menu")} // Use router.push
           />
 
           <Button

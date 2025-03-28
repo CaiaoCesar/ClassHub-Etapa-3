@@ -1,23 +1,28 @@
 import React from "react";
-import { View, Image } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../@types/types";
+import { View, Image, Text, StyleSheet } from "react-native";
+import { useRouter } from 'expo-router';
+import { useAuth, useUser } from "@clerk/clerk-expo";
 
-import { themes } from "../../global/themes";
-import { icons } from "../../global/icons";
+import { themes } from "../../src/global/themes";
+import { icons } from "../../src/global/icons";
 import { style } from "./styles";
 
-import { Button } from "../../components/button/button";
+import { Button } from "../../src/components/button/button";
 
 export default function Menu() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
+  const { user } = useUser();
+  const { signOut } = useAuth();
 
   return (
     <View style={style.container}>
       {/* Cabeçalho */}
       <View style={style.boxTop}>
         <Image source={icons.logo} style={style.logo} resizeMode="contain" />
+        {user?.imageUrl && (
+          <Image source={{ uri: user.imageUrl }} style={styles.image} />
+        )}
+        <Text style={styles.text}>{user?.username}</Text>
       </View>
 
       {/* Botão Agendar */}
@@ -26,7 +31,7 @@ export default function Menu() {
           buttonText={themes.strings.agendar}
           buttonStyle={style.button}
           textStyle={style.textAgendar}
-          onPress={() => navigation.navigate("Agendar")}
+          onPress={() => router.push("/agendar")}
         />
       </View>
 
@@ -36,7 +41,7 @@ export default function Menu() {
           buttonText={themes.strings.agendamentos}
           buttonStyle={style.button}
           textStyle={style.textAgendamentos}
-          onPress={() => navigation.navigate("Agendamentos")}
+          onPress={() => router.push("/agendamentos")}
         />
       </View>
 
@@ -48,9 +53,24 @@ export default function Menu() {
           buttonStyle={style.button3}
           textStyle={style.textLogout}
           iconStyle={style.icon}
-          onPress={() => navigation.navigate("Login")}
+          onPress={async () => {
+            await signOut();
+            router.replace('/login'); // Redireciona para a tela de login após o logout
+          }}
         />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  text: {
+    fontSize: 18,
+    fontWeight: "bold"
+  },
+  image: {
+    width: 92,
+    height: 92,
+    borderRadius: 24,
+  }
+})
