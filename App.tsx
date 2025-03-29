@@ -1,6 +1,6 @@
+import 'expo-router/entry';
 import { useFonts } from 'expo-font';
 import { ActivityIndicator, View } from 'react-native';
-import { Slot } from 'expo-router'; // Importe o Slot
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -16,5 +16,5 @@ export default function App() {
     );
   }
 
-  return <Slot />; // Renderize o Slot
+  return null;
 }

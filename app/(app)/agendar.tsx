@@ -8,7 +8,7 @@ import { ptBR } from "../../src/utils/localeCalendarConfig";
 
 import { themes } from "../../src/global/themes";
 import { icons } from "../../src/global/icons";
-import { style, calendarTheme } from "./styles";
+import { style, calendarTheme } from "./stylesAgendar";
 
 import { Button } from "../../src/components/button/button";
 import {
@@ -189,7 +189,7 @@ export default function Agendar() {
             iconSource={icons.voltar}
             buttonStyle={style.buttonVoltar}
             iconStyle={style.Voltar}
-            onPress={() => router.push("/menu")} // Use router.push
+            onPress={() => router.push("/(app)/menu")}
           />
 
           <Button

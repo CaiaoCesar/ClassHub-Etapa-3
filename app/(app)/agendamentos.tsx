@@ -3,7 +3,7 @@ import { Text, View, Image, Modal, ScrollView, Pressable, Alert } from "react-na
 import { useRouter } from 'expo-router';
 import { themes } from "../../src/global/themes";
 import { icons } from "../../src/global/icons";
-import { style } from "./styles";
+import { style } from "./stylesAgendamentos";
 import { Button } from "../../src/components/button/button";
 import { cancelEvent, getScheduledEvents, getCurrentUser } from "../../services/calendlyService";
 
@@ -192,7 +192,7 @@ export default function Agendamentos() {
             iconSource={icons.voltar}
             buttonStyle={style.buttonVoltar}
             iconStyle={style.Voltar}
-            onPress={() => router.push("/menu")}
+            onPress={() => router.push("/(app)/menu")}
           />
 
           <Button

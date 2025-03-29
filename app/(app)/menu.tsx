@@ -2,11 +2,9 @@ import React from "react";
 import { View, Image, Text, StyleSheet } from "react-native";
 import { useRouter } from 'expo-router';
 import { useAuth, useUser } from "@clerk/clerk-expo";
-
 import { themes } from "../../src/global/themes";
 import { icons } from "../../src/global/icons";
-import { style } from "./styles";
-
+import { style } from "./stylesMenu";
 import { Button } from "../../src/components/button/button";
 
 export default function Menu() {
@@ -22,7 +20,7 @@ export default function Menu() {
         {user?.imageUrl && (
           <Image source={{ uri: user.imageUrl }} style={styles.image} />
         )}
-        <Text style={styles.text}>{user?.username}</Text>
+        <Text style={styles.text}>{user?.firstName}</Text>
       </View>
 
       {/* Botão Agendar */}
@@ -31,7 +29,7 @@ export default function Menu() {
           buttonText={themes.strings.agendar}
           buttonStyle={style.button}
           textStyle={style.textAgendar}
-          onPress={() => router.push("/agendar")}
+          onPress={() => router.push("/(app)/agendar")}
         />
       </View>
 
@@ -41,7 +39,7 @@ export default function Menu() {
           buttonText={themes.strings.agendamentos}
           buttonStyle={style.button}
           textStyle={style.textAgendamentos}
-          onPress={() => router.push("/agendamentos")}
+          onPress={() => router.push("/(app)/agendamentos")}
         />
       </View>
 
@@ -55,7 +53,7 @@ export default function Menu() {
           iconStyle={style.icon}
           onPress={async () => {
             await signOut();
-            router.replace('/login'); // Redireciona para a tela de login após o logout
+            router.replace('/(auth)/login');
           }}
         />
       </View>
@@ -66,11 +64,13 @@ export default function Menu() {
 const styles = StyleSheet.create({
   text: {
     fontSize: 18,
-    fontWeight: "bold"
+    fontWeight: "bold",
+    top: -240
   },
   image: {
-    width: 92,
-    height: 92,
-    borderRadius: 24,
+    width: 80,
+    height: 80,
+    borderRadius: 44,
+    top: -240
   }
 })

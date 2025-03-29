@@ -26,7 +26,7 @@ export const style = StyleSheet.create({
   },
 
   button1: {
-    width: 237,
+    width: 267,
     height: 45,
     alignItems: "center",
     justifyContent: "center",
@@ -37,7 +37,7 @@ export const style = StyleSheet.create({
   },
 
   button2: {
-    width: 237,
+    width: 267,
     height: 45,
     alignItems: "center",
     justifyContent: "center",
@@ -50,15 +50,15 @@ export const style = StyleSheet.create({
 
   textGmail: {
     fontSize: themes.font_size.m,
-    width: 139,
-    height: 25,
+    width: 209,
+    height: 35,
     fontFamily: themes.fonts.jaro,
   },
 
   textAppleID: {
     fontSize: themes.font_size.m,
-    width: 159,
-    height: 25,
+    width: 209,
+    height: 35,
     fontFamily: themes.fonts.jaro,
   },
 
