@@ -41,7 +41,7 @@ O ClassHub é um aplicativo de agendamento de horários que integra com a API do
 
 5. **Iniciar o projeto**
    ```bash
-   npm start
+   npx expo start
    ```
 
 ## 📌 Observações
