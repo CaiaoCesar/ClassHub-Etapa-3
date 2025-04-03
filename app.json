@@ -2,27 +2,30 @@
   "expo": {
     "name": "ClassHub",
     "slug": "classhub",
-    "scheme": "ClassHub",
+    "scheme": "classhub", 
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "jsEngine": "hermes",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#A7EA9D"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cobynnha.nofrills",
-      "config": {
-        "googleSignIn": {
-          "reservedClientId": "com.googleusercontent.apps.207695360729-tfodeknp9geq8o55e2pb3bmg3pj5097p"
-        }
-      },
+      "bundleIdentifier": "io.github.caiaocesar.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.207695360729-tfodeknp9geq8o55e2pb3bmg3pj5097p"
+            ]
+          }
+        ],
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleURLName": "io.github.caiaocesar.app"
       }
     },
     "android": {
@@ -30,9 +33,23 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#A7EA9D"
       },
-      "package": "com.cobynnha.nofrills",
+      "package": "io.github.caiaocesar.app",
       "permissions": [
-        "android.permissions.INTERNET"
+        "INTERNET" 
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "classhub"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ]
     },
     "web": {
@@ -44,7 +61,10 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.207695360729-tfodeknp9geq8o55e2pb3bmg3pj5097p"
+          "iosUrlScheme": "com.googleusercontent.apps.207695360729-tfodeknp9geq8o55e2pb3bmg3pj5097p",
+          "android": {
+            "packageName": "io.github.caiaocesar.app"
+          }
         }
       ]
     ],
