@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ClassHub",
-    "slug": "ClassHub",
+    "slug": "classhub",
     "scheme": "ClassHub",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,20 +14,48 @@
       "backgroundColor": "#A7EA9D"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cobynnha.nofrills",
+      "config": {
+        "googleSignIn": {
+          "reservedClientId": "com.googleusercontent.apps.207695360729-tfodeknp9geq8o55e2pb3bmg3pj5097p"
+        }
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#A7EA9D"
-      }
+      },
+      "package": "com.cobynnha.nofrills",
+      "permissions": [
+        "android.permissions.INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.207695360729-tfodeknp9geq8o55e2pb3bmg3pj5097p"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f8d30428-d531-4dae-b2c6-87b4a9a7723e"
+      },
+      "router": {
+        "origin": false
+      }
+    },
+    "owner": "caiaocesar"
   }
 }

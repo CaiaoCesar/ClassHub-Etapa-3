@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { View, Image, Alert } from "react-native";
 import { useRouter } from 'expo-router';
-import { useOAuth } from "@clerk/clerk-expo";
+// Removido: import { useOAuth } from "@clerk/clerk-expo";
+import { GoogleSignin, statusCodes, isErrorWithCode } from '@react-native-google-signin/google-signin'; // Importações necessárias
 import { themes } from "../../src/global/themes";
 import { icons } from "../../src/global/icons";
 import { style } from "./stylesLogin";
@@ -10,43 +11,74 @@ import { Button } from "../../src/components/button/button";
 export default function Login() {
     const router = useRouter();
     const [googleLoading, setGoogleLoading] = useState(false);
-    const [appleLoading, setAppleLoading] = useState(false);
-    
-    // Configuração para OAuth
-    const { startOAuthFlow: startGoogleOAuth } = useOAuth({ strategy: "oauth_google" });
-    const { startOAuthFlow: startAppleOAuth } = useOAuth({ strategy: "oauth_apple" });
+    // Removido: const [appleLoading, setAppleLoading] = useState(false);
 
-    const handleOAuthSignIn = async (strategy: "google" | "apple") => {
-        const setLoading = strategy === "google" ? setGoogleLoading : setAppleLoading;
-        const startOAuth = strategy === "google" ? startGoogleOAuth : startAppleOAuth;
-        
+    // Removida a configuração do useOAuth
+
+    // Nova função para o Google Sign-In
+    const handleGoogleSignIn = async () => {
+        setGoogleLoading(true);
         try {
-            setLoading(true);
-            
-            const { createdSessionId, setActive } = await startOAuth({
-                redirectUrl: "classhub://oauth-callback"
-            });
+            // Verifica se o Google Play Services está disponível (apenas Android)
+            await GoogleSignin.hasPlayServices();
 
-            if (createdSessionId) {
-                await setActive?.({ session: createdSessionId });
-                router.replace('/(app)/menu');
+            // Inicia o fluxo de login
+            const userInfoResponse = await GoogleSignin.signIn(); // userInfoResponse agora tem idToken e user
+            console.log("Login bem-sucedido!");
+            console.log("ID Token:", userInfoResponse.idToken);
+            console.log("User Info:", userInfoResponse.user); // Acessa user diretamente
+
+            // A resposta contém userInfoResponse.user com nome, email, foto, etc.
+            // e userInfoResponse.idToken que você pode enviar ao seu backend
+
+            // Exemplo de como usar os dados:
+            const { name, email, photo } = userInfoResponse.user;
+            console.log(`Nome: ${name}, Email: ${email}, Foto: ${photo}`);
+
+            // Navega para a tela principal após o login
+            // Você pode querer passar dados do usuário para a próxima tela ou salvá-los globalmente
+            router.replace('/(app)/menu');
+
+        } catch (error: any) {
+            // ... (o resto do catch permanece igual)
+            console.error("Erro no Google Sign-In:", error);
+            console.error("Código do erro:", error.code); // Loga o código para debug
+
+            if (isErrorWithCode(error)) { // Verifica se é um erro conhecido do Google Sign-In
+                switch (error.code) {
+                    case statusCodes.SIGN_IN_CANCELLED:
+                        // Usuário cancelou o fluxo de login
+                        Alert.alert("Login Cancelado", "Você cancelou o login com o Google.");
+                        break;
+                    case statusCodes.IN_PROGRESS:
+                        // Operação (ex: login) já está em andamento
+                        Alert.alert("Aguarde", "O login com o Google já está em andamento.");
+                        break;
+                    case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+                        // Google Play Services não disponível ou desatualizado (apenas Android)
+                        Alert.alert("Erro de Serviço", "O Google Play Services não está disponível ou está desatualizado no seu dispositivo.");
+                        break;
+                    default:
+                        // Algum outro erro aconteceu
+                        Alert.alert("Erro no Login", `Ocorreu um erro inesperado durante o login com o Google. Código: ${error.code}`);
+                }
             } else {
-                Alert.alert("Erro", `Não foi possível realizar login com ${strategy === "google" ? "Google" : "Apple"}`);
+                // Um erro não relacionado ao Google Sign-In aconteceu
+                Alert.alert("Erro Desconhecido", "Ocorreu um erro inesperado durante o login.");
             }
-        } catch (err) {
-            console.error(`Erro no login ${strategy}:`, err);
-            Alert.alert("Erro", "Ocorreu um erro durante o login");
         } finally {
-            setLoading(false);
+            setGoogleLoading(false);
         }
     };
+
+    // Removida a função handleOAuthSignIn antiga
 
     return (
         <View style={style.container}>
             <View style={style.boxTop}>
                 <Image source={icons.logo} style={style.logo} resizeMode="contain" />
             </View>
-            
+
             <View style={style.boxBotton}>
                 <Button
                     iconSource={icons.gmail}
@@ -54,22 +86,25 @@ export default function Login() {
                     buttonStyle={style.button1}
                     textStyle={style.textGmail}
                     iconStyle={style.icon}
-                    onPress={() => handleOAuthSignIn("google")}
+                    onPress={handleGoogleSignIn} // Chama a nova função
                     isLoading={googleLoading}
+                    disabled={googleLoading} // Desabilita enquanto carrega
                 />
             </View>
-            
-            <View style={style.boxBotton}>
+
+            {/*Foco no Google mas o botao da apple ainda vai permanecer aqui*/}
+            {/* <View style={style.boxBotton}>
                 <Button
                     iconSource={icons.apple}
                     buttonText={themes.strings.appleID}
                     buttonStyle={style.button2}
                     textStyle={style.textAppleID}
                     iconStyle={style.icon}
-                    onPress={() => handleOAuthSignIn("apple")}
+                    onPress={() => {}} // Lógica do Apple Sign In aqui se necessário
                     isLoading={appleLoading}
+                    disabled={appleLoading}
                 />
-            </View>
+            </View> */}
         </View>
     );
 }
