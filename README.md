@@ -19,12 +19,12 @@ O ClassHub é um aplicativo de agendamento de horários que integra com a API do
 
 1. **Clonar o repositório**
    ```bash
-   git clone https://github.com/Mikemps/ifnmg-DAM-ClassHub.git
+   git clone https://github.com/CaiaoCesar/ClassHub-Etapa-3.git
    ```
 
 2. **Acessar a pasta do projeto**
    ```bash
-   cd ifnmg-DAM-ClassHub
+   cd ClassHub-Etapa-3
    ```
 
 3. **Instalar as dependências**
