@@ -8,7 +8,7 @@ import { ptBR } from "../../src/utils/localeCalendarConfig";
 
 import { themes } from "../../src/global/themes";
 import { icons } from "../../src/global/icons";
-import { style, calendarTheme } from "./stylesAgendar";
+import { style, calendarTheme } from "../../src/styles/stylesAgendar";
 
 import { Button } from "../../src/components/button/button";
 import {

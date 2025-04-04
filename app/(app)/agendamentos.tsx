@@ -3,7 +3,7 @@ import { Text, View, Image, Modal, ScrollView, Pressable, Alert } from "react-na
 import { useRouter } from 'expo-router';
 import { themes } from "../../src/global/themes";
 import { icons } from "../../src/global/icons";
-import { style } from "./stylesAgendamentos";
+import { style } from "../../src/styles/stylesAgendamentos";
 import { Button } from "../../src/components/button/button";
 import { cancelEvent, getScheduledEvents, getCurrentUser } from "../../services/calendlyService";
 

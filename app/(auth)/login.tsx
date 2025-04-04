@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { themes } from "../../src/global/themes";
 import { icons } from "../../src/global/icons";
-import { style } from "./stylesLogin";
+import { style } from "../../src/styles/stylesLogin";
 import { Button } from "../../src/components/button/button";
 
 // Tipos atualizados para compatibilidade com a biblioteca

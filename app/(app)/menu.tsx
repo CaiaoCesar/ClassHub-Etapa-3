@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { themes } from "../../src/global/themes";
 import { icons } from "../../src/global/icons";
-import { style } from "./stylesMenu";
+import { style } from "../../src/styles/stylesMenu";
 import { Button } from "../../src/components/button/button";
 
 export default function Menu() {

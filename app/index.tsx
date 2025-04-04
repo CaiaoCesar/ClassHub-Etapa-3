@@ -3,7 +3,7 @@ import { View, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { icons } from '../src/global/icons';
-import { themes } from '../src/global/themes';
+import { style} from "../src/styles/stylesIndex";
 
 export default function Splash() {
   const router = useRouter();
@@ -17,28 +17,15 @@ export default function Splash() {
         } else {
           router.replace('/(auth)/login');
         }
-      }, 2000); // Reduzi para 2 segundos para testes
+      }, 2000); 
 
       return () => clearTimeout(timer);
     }
   }, [isSignedIn, isLoaded]);
 
   return (
-    <View style={styles.container}>
-      <Image source={icons.splash} style={styles.splashImage} resizeMode="contain" />
+    <View style={style.container}>
+      <Image source={icons.splash} style={style.splashImage} resizeMode="contain" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: themes.colors.verdeClaro,
-  },
-  splashImage: {
-    width: 200,
-    height: 200,
-  },
-});
