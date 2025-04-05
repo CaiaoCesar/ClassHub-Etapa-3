@@ -2,15 +2,11 @@
 
 buildscript {
     ext {
-        buildToolsVersion = findProperty('android.buildToolsVersion') ?: '35.0.0' 
+        buildToolsVersion = findProperty('android.buildToolsVersion') ?: '35.0.0'
         minSdkVersion = Integer.parseInt(findProperty('android.minSdkVersion') ?: '24')
-        compileSdkVersion = Integer.parseInt(findProperty('android.compileSdkVersion') ?: '35') 
+        compileSdkVersion = Integer.parseInt(findProperty('android.compileSdkVersion') ?: '35')
         targetSdkVersion = Integer.parseInt(findProperty('android.targetSdkVersion') ?: '34')
-        // Usando a versão Kotlin definida aqui (1.9.25 está OK para AGP 8.4.1)
-        kotlinVersion = findProperty('android.kotlinVersion') ?: '1.9.25' 
-        
-        // Definindo explicitamente a versão do AGP recomendada para Expo 52 / Gradle 8+
-        agpVersion = findProperty('android.agpVersion') ?: '8.6.0'
+        kotlinVersion = findProperty('android.kotlinVersion') ?: '1.9.25'
 
         ndkVersion = "26.1.10909125"
     }
@@ -19,16 +15,9 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // Use a variável agpVersion que definimos acima
-        classpath("com.android.tools.build:gradle:$agpVersion") 
-        
-        // Deixe o React Native Gradle Plugin sem versão explícita por enquanto,
-        // pois o Expo/RN geralmente o configura internamente. 
-        // Adicionar uma versão aqui pode causar conflitos se não for a esperada.
-        classpath('com.facebook.react:react-native-gradle-plugin') 
-        
-        // Use a variável kotlinVersion definida no bloco ext
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion") 
+        classpath('com.android.tools.build:gradle')
+        classpath('com.facebook.react:react-native-gradle-plugin')
+        classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
     }
 }
 
