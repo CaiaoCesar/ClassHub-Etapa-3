@@ -9,8 +9,7 @@ buildscript {
         // A versão do Kotlin geralmente está correta aqui:
         kotlinVersion = findProperty('android.kotlinVersion') ?: '1.9.25' 
         
-        // ADICIONE A VERSÃO DO AGP AQUI - Comece com 8.4.1
-        agpVersion = findProperty('android.agpVersion') ?: '8.4.1' 
+        agpVersion = findProperty('android.agpVersion') ?: '8.6.0'
 
         ndkVersion = "26.1.10909125"
     }
